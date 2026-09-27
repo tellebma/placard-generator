@@ -1,0 +1,36 @@
+.print-dossier { display: none; }
+
+@media print {
+  @page { size: A4 landscape; margin: 11mm; }
+
+  /* Toujours imprimé en clair, quel que soit le thème de l'écran. */
+  :root {
+    --bg: #fff; --surface: #fff; --surface-2: #f7f5f1; --surface-3: #efebe4; --canvas: #fff;
+    --border: #d9d3c8; --border-strong: #bdb5a7; --text: #111; --text-2: #444; --text-3: #777;
+    --wood: #efe0c8; --wood-2: #e3cda9; --wood-edge: #6b4a26; --wood-back: #dccaa9;
+    --accent: #b5652a; --accent-soft: #f6e7da; --accent-text: #8a4318; --dim: #1f5a8f; --gap: #b5652a;
+    --shadow-sm: none;
+    color-scheme: light;
+  }
+  body { font-size: 10.5px; background: #fff; }
+  .app { display: block; height: auto; overflow: visible; }
+  .app > *:not(.print-dossier) { display: none !important; }
+  .toasts, .modal-backdrop { display: none !important; }
+
+  .print-dossier { display: block; }
+  .print-page { break-after: page; display: flex; flex-direction: column; gap: 10px; }
+  .print-page:last-child { break-after: auto; }
+  .print-page h2 { font-size: 1.25rem; margin-top: 6px; }
+  .print-head { border-bottom: 2px solid var(--text); padding-bottom: 6px; }
+  .print-head h1 { font-size: 1.7rem; }
+  .print-plan { display: grid; grid-template-columns: 3fr 1fr; gap: 10mm; align-items: start; }
+  .print-plan .plan { max-height: 160mm; }
+
+  .card { box-shadow: none; break-inside: avoid; }
+  .board, .step, tr, .checklist li { break-inside: avoid; }
+  .boards { grid-template-columns: repeat(2, 1fr); }
+  .legend { display: none; }
+  .table tr.is-done td { opacity: 1; }
+  .check { border-color: #555; }
+  .step__body ul { background: #fff; }
+}

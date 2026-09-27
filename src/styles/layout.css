@@ -1,0 +1,89 @@
+/* Coquille de l'application ------------------------------------------- */
+.app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  height: var(--topbar-h);
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.topbar > .segmented { width: auto; }
+.topbar > .segmented button { padding: 0 16px; }
+.topbar__brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logo { width: 28px; height: 28px; flex-shrink: 0; fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; stroke-linecap: round; }
+.topbar__name {
+  min-width: 0;
+  width: 100%;
+  max-width: 280px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-overflow: ellipsis;
+}
+.topbar__name:hover { border-color: var(--border); }
+.topbar__name:focus { border-color: var(--accent); box-shadow: var(--ring); outline: none; background: var(--surface); }
+.topbar__actions { display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
+.topbar__sep { width: 1px; height: 20px; margin: 0 6px; background: var(--border); }
+.topbar .dot { margin-left: 2px; }
+
+/* Espace de conception : panneau | scène | inspecteur ------------------ */
+.workspace {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr) 330px;
+}
+.panel { min-height: 0; background: var(--surface); display: flex; flex-direction: column; }
+.panel--left { border-right: 1px solid var(--border); }
+.panel--right { border-left: 1px solid var(--border); }
+.panel-scroll { flex: 1; overflow-y: auto; padding-bottom: 24px; }
+.stage-wrap { min-width: 0; min-height: 0; display: flex; }
+
+/* Sections des panneaux */
+.section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.section__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 22px; }
+.section__head h3 { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.7rem; color: var(--text-3); font-weight: 650; }
+.section__toggle { display: flex; align-items: center; gap: 6px; padding: 0; border: none; background: none; }
+.section__chevron { color: var(--text-3); transition: transform 0.2s var(--ease); }
+.section.is-collapsed .section__chevron { transform: rotate(-90deg); }
+.section__body { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+
+/* Mode fabrication ----------------------------------------------------- */
+.build { flex: 1; min-height: 0; display: grid; grid-template-columns: 250px minmax(0, 1fr); }
+
+/* Responsive ----------------------------------------------------------- */
+@media (max-width: 1280px) {
+  .workspace { grid-template-columns: 260px minmax(0, 1fr) 300px; }
+}
+
+@media (max-width: 1020px) {
+  .app { height: auto; min-height: 100vh; overflow: visible; }
+  .workspace { grid-template-columns: 1fr 1fr; grid-template-areas: 'stage stage' 'left right'; }
+  .stage-wrap { grid-area: stage; height: 72vh; min-height: 460px; border-bottom: 1px solid var(--border); }
+  .panel--left { grid-area: left; }
+  .panel--right { grid-area: right; }
+  .panel-scroll { overflow: visible; }
+  .build { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+  .topbar { grid-template-columns: 1fr auto; height: auto; padding: 8px 10px; row-gap: 8px; }
+  .topbar > .segmented { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+  .hide-sm { display: none !important; }
+  .workspace { grid-template-columns: 1fr; grid-template-areas: 'stage' 'right' 'left'; }
+  .panel--left, .panel--right { border: none; border-top: 1px solid var(--border); }
+}
+
+@media (max-width: 680px), (pointer: coarse) {
+  .stage__hint { display: none; }
+  .editor { padding-bottom: 8px; }
+}

@@ -1,0 +1,221 @@
+/* Scène ---------------------------------------------------------------- */
+.stage { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--canvas); }
+.stage__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.stage__toolbar .segmented { width: auto; }
+.stage__canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  background-color: var(--canvas);
+  background-image: radial-gradient(var(--grid-dot) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+}
+.stage__loading { margin: auto; color: var(--text-3); }
+.stage__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  max-width: calc(100% - 24px);
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(6px);
+  font-size: 0.74rem;
+  color: var(--text-2);
+  pointer-events: none;
+}
+.stage__hint span { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 550;
+}
+.status--ok { background: var(--ok-soft); color: var(--ok); }
+.status--warning { background: var(--warning-soft); color: var(--warning); }
+.status--error { background: var(--danger-soft); color: var(--danger); }
+.status--button:hover { filter: brightness(0.97); }
+.issue-menu { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; width: min(380px, 80vw); }
+.issue-menu .callout:not(:disabled) { cursor: pointer; }
+.issue-menu .callout:not(:disabled):hover { filter: brightness(0.96); }
+
+/* Barre de résumé */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.summary__stats { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 0; flex: 1; }
+.summary__stats div { display: flex; flex-direction: column; }
+.summary__stats dt { font-size: 0.7rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.summary__stats dd { margin: 0; font-weight: 600; font-size: 0.88rem; white-space: nowrap; }
+
+/* Dessins partagés (plan, coupe, miniatures) --------------------------- */
+.plan, .editor { width: 100%; height: 100%; display: block; font-family: var(--font-mono); }
+.plan__part { fill: var(--wood); stroke: var(--wood-edge); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.plan__part--plinth { fill: var(--wood-2); }
+.plan__part--back { fill: var(--wood-back); }
+.plan__part--side-face { fill: color-mix(in srgb, var(--wood) 55%, var(--canvas)); }
+.plan__floor { stroke: var(--text-3); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.plan__wall { stroke: var(--text-3); stroke-width: 1.5; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; }
+.plan__rod { stroke: var(--text-2); stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.plan__label { fill: var(--text-3); }
+.plan--thumb .plan__floor { stroke-width: 1; }
+.dim line { stroke: var(--dim); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.dim text { fill: var(--dim); font-weight: 600; }
+.dim--accent .dim line { stroke: var(--gap); }
+.dim--accent .dim text { fill: var(--gap); }
+.dim--gap .dim text { paint-order: stroke; stroke: var(--canvas); stroke-width: 6px; stroke-linejoin: round; }
+
+.doors .door polygon { fill: color-mix(in srgb, var(--accent) 14%, transparent); stroke: var(--accent); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.door__hinge { fill: var(--accent); }
+.door__handle { stroke: var(--text); stroke-width: 4; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+
+/* Canevas interactif --------------------------------------------------- */
+.editor { user-select: none; touch-action: none; padding: 8px 8px 56px; }
+.editor .zone { fill: transparent; cursor: pointer; transition: fill 0.15s; }
+.editor .zone:hover { fill: color-mix(in srgb, var(--accent) 5%, transparent); }
+.editor .zone.is-selected { fill: color-mix(in srgb, var(--accent) 9%, transparent); stroke: var(--accent); stroke-width: 2; stroke-dasharray: 7 5; vector-effect: non-scaling-stroke; }
+.editor .zone.is-error { fill: color-mix(in srgb, var(--danger) 8%, transparent); }
+.editor .part-sep { fill: var(--wood); stroke: var(--wood-edge); stroke-width: 1; vector-effect: non-scaling-stroke; cursor: ew-resize; transition: fill 0.15s; }
+.editor .part-sep:hover { fill: var(--accent); }
+.editor .shelf { cursor: ns-resize; }
+.editor .shelf .hit, .editor .rod .hit { fill: transparent; stroke: transparent; }
+.editor .shelf:hover .plan__part--shelf { fill: var(--wood-2); }
+.editor .shelf.is-selected .plan__part--shelf { fill: var(--accent); stroke: var(--accent-hover); }
+.shelf__label { fill: var(--text-3); pointer-events: none; }
+.editor .shelf.is-selected .shelf__label { fill: var(--accent-text); font-weight: 700; }
+.editor .rod { cursor: ns-resize; }
+.rod__bar { stroke: var(--text-2); stroke-width: 4; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.editor .rod:hover .rod__bar { stroke: var(--text); }
+.editor .rod.is-selected .rod__bar { stroke: var(--accent); }
+.editor.is-dragging--shelf, .editor.is-dragging--rod { cursor: ns-resize; }
+.editor.is-dragging--sep { cursor: ew-resize; }
+.editor.is-dragging .zone { pointer-events: none; }
+
+/* Vue 3D */
+.viewer3d { position: relative; flex: 1; min-width: 0; }
+.viewer3d canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.viewer3d canvas:active { cursor: grabbing; }
+.viewer3d__reset { position: absolute; top: 12px; right: 12px; background: var(--surface); }
+
+/* Panneau gauche -------------------------------------------------------- */
+.shape-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.shape-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  transition: border-color 0.15s, background 0.15s;
+}
+.shape-card:hover { border-color: var(--border-strong); }
+.shape-card.is-active { border-color: var(--accent); background: var(--accent-soft); }
+.shape-card strong { font-size: 0.85rem; font-weight: 600; }
+.shape-card span { font-size: 0.72rem; color: var(--text-3); }
+.shape-icon { width: 38px; height: 38px; margin-bottom: 4px; }
+.shape-icon rect, .shape-icon path { fill: var(--wood); stroke: var(--wood-edge); stroke-width: 1.5; }
+.shape-icon line { stroke: var(--text-3); stroke-width: 1.5; }
+.shape-card.is-active .shape-icon rect, .shape-card.is-active .shape-icon path { stroke: var(--accent); }
+
+/* Inspecteur ------------------------------------------------------------ */
+.col-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.col-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.col-item:hover { border-color: var(--accent); background: var(--surface-2); }
+.col-item__text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.col-item__text strong { font-size: 0.88rem; font-weight: 600; }
+.col-item__text span { font-size: 0.76rem; color: var(--text-2); }
+.col-glyph { width: 24px; height: 34px; flex-shrink: 0; }
+.col-glyph__box { fill: var(--wood); stroke: var(--wood-edge); stroke-width: 1.2; }
+.col-glyph__shelf { stroke: var(--wood-edge); stroke-width: 1.6; }
+.col-glyph__rod { stroke: var(--text-2); stroke-width: 2; stroke-linecap: round; }
+
+.insp-head { display: flex; align-items: center; gap: 4px; padding: 10px 10px 4px; }
+.insp-head__title { flex: 1; display: flex; align-items: baseline; gap: 6px; padding-left: 2px; }
+.insp-head__title strong { font-size: 1rem; }
+.insp-actions { display: flex; align-items: center; gap: 2px; padding: 0 10px 10px; border-bottom: 1px solid var(--border); }
+.insp-issues { list-style: none; margin: 0; padding: 12px 16px 0; display: flex; flex-direction: column; gap: 6px; }
+
+.doors-icon { fill: currentColor; stroke: currentColor; stroke-width: 1.4; }
+.doors-icon rect { fill: none; }
+
+.shelf-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.shelf-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 4px 4px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.shelf-item:hover { background: var(--surface-2); }
+.shelf-item.is-selected { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.shelf-item__gap { flex: 1; font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-3); }
+.even-row { display: flex; align-items: center; gap: 8px; padding-top: 4px; }
+.even-row .num-input { width: 64px; }
+
+/* Modèles --------------------------------------------------------------- */
+.presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+.preset {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-align: left;
+  transition: border-color 0.15s, transform 0.15s var(--ease), box-shadow 0.15s;
+}
+.preset:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow); }
+.preset strong { font-size: 0.95rem; margin-top: 6px; }
+.preset__thumb {
+  display: block;
+  height: 150px;
+  padding: 10px;
+  border-radius: var(--radius);
+  background-color: var(--canvas);
+  background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+  background-size: 14px 14px;
+}

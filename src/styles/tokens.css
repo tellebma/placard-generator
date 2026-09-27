@@ -1,0 +1,96 @@
+/* Jetons de design — thème atelier : papier chaud, bois clair, accent terre cuite. */
+
+:root {
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --bg: #f4f1ec;
+  --surface: #ffffff;
+  --surface-2: #faf8f5;
+  --surface-3: #f1ede6;
+  --border: #e5dfd5;
+  --border-strong: #d2cabd;
+  --text: #1e1c19;
+  --text-2: #5d574e;
+  --text-3: #8f887c;
+
+  --accent: #c0612a;
+  --accent-hover: #a8531f;
+  --accent-soft: #f9eadf;
+  --accent-text: #9a4a18;
+  --on-accent: #ffffff;
+
+  --wood: #ead7b9;
+  --wood-2: #dfc59c;
+  --wood-edge: #8a6844;
+  --wood-back: #d7c2a1;
+  --canvas: #fbfaf7;
+  --grid-dot: #e3ddd2;
+  --dim: #2f6ea5;
+  --gap: #c0612a;
+
+  --danger: #c2372b;
+  --danger-soft: #fbe9e7;
+  --warning: #a86a0c;
+  --warning-soft: #fcf2df;
+  --info: #2f6ea5;
+  --info-soft: #e7f0f8;
+  --ok: #2f8052;
+  --ok-soft: #e4f3ea;
+
+  --radius-lg: 14px;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --shadow-sm: 0 1px 2px rgb(40 30 20 / 6%);
+  --shadow: 0 1px 2px rgb(40 30 20 / 6%), 0 4px 14px rgb(40 30 20 / 6%);
+  --shadow-lg: 0 10px 40px rgb(40 30 20 / 18%), 0 2px 6px rgb(40 30 20 / 8%);
+  --ring: 0 0 0 3px rgb(192 97 42 / 22%);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --topbar-h: 56px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141311;
+    --surface: #1c1b18;
+    --surface-2: #211f1c;
+    --surface-3: #292724;
+    --border: #312e29;
+    --border-strong: #423e37;
+    --text: #f2eee7;
+    --text-2: #b9b1a5;
+    --text-3: #857e73;
+
+    --accent: #e27a3e;
+    --accent-hover: #ec8d55;
+    --accent-soft: #3a261a;
+    --accent-text: #f2a473;
+    --on-accent: #1a120c;
+
+    --wood: #5c4631;
+    --wood-2: #6d543b;
+    --wood-edge: #d2ae82;
+    --wood-back: #3f3224;
+    --canvas: #181715;
+    --grid-dot: #2b2925;
+    --dim: #7fb4e6;
+    --gap: #f2a473;
+
+    --danger: #f07167;
+    --danger-soft: #3a1d1a;
+    --warning: #e8b04e;
+    --warning-soft: #382c16;
+    --info: #7fb4e6;
+    --info-soft: #1b2a38;
+    --ok: #6cc48f;
+    --ok-soft: #173024;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 14px rgb(0 0 0 / 25%);
+    --shadow-lg: 0 10px 40px rgb(0 0 0 / 55%);
+    --ring: 0 0 0 3px rgb(226 122 62 / 30%);
+    color-scheme: dark;
+  }
+}
