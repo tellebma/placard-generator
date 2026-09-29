@@ -15,9 +15,15 @@ export interface Frame {
   readonly viewBox: string;
 }
 
-export function makeFrame(cfg: ClosetConfig, pad = { l: 12, r: 12, t: 10, b: 9 }): Frame {
-  const W = cfg.width;
-  const H = maxHeight(cfg);
+export interface Pad {
+  readonly l: number;
+  readonly r: number;
+  readonly t: number;
+  readonly b: number;
+}
+
+/** Repère de dessin générique pour une largeur/hauteur données (ensemble de plusieurs caissons). */
+export function makeFrameFor(W: number, H: number, pad: Pad = { l: 12, r: 12, t: 10, b: 9 }): Frame {
   const u = Math.max(W, H) / 100;
   const Y = (y: number) => H - y;
   return {
@@ -29,4 +35,8 @@ export function makeFrame(cfg: ClosetConfig, pad = { l: 12, r: 12, t: 10, b: 9 }
     points: (poly) => poly.map(([x, y]) => `${x},${Y(y)}`).join(' '),
     viewBox: `${-pad.l * u} ${-pad.t * u} ${W + (pad.l + pad.r) * u} ${H + (pad.t + pad.b) * u}`,
   };
+}
+
+export function makeFrame(cfg: ClosetConfig, pad: Pad = { l: 12, r: 12, t: 10, b: 9 }): Frame {
+  return makeFrameFor(cfg.width, maxHeight(cfg), pad);
 }

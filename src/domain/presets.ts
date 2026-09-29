@@ -1,14 +1,44 @@
 import { defaultConfig, newColumn } from './defaults';
-import type { ClosetConfig } from './types';
+import { singleEnsemble } from './ensemble';
+import type { ClosetConfig, Ensemble } from './types';
 
 export interface Preset {
   readonly id: string;
   readonly title: string;
   readonly description: string;
+  readonly build: () => Ensemble;
+}
+
+interface SinglePreset extends Omit<Preset, 'build'> {
   readonly build: () => ClosetConfig;
 }
 
-export const PRESETS: readonly Preset[] = [
+/** Trois caissons : deux colonnes hautes encadrant un meuble suspendu au-dessus d'une porte, plaqué au mur. */
+function niche(): Ensemble {
+  const base = defaultConfig();
+  const caisson = (name: string, width: number, height: number, depth: number, doors: 1 | 2, elevation = 0): ClosetConfig => ({
+    ...base,
+    id: `${base.id}-${name}`,
+    name,
+    width,
+    heightLeft: height,
+    heightRight: height,
+    depth,
+    elevation,
+    plinth: elevation > 0 ? 0 : base.plinth,
+    columns: [newColumn({ doors })],
+  });
+  return {
+    name: 'Placard trois caissons',
+    caissons: [
+      caisson('Colonne gauche', 1000, 2400, 600, 2),
+      caisson('Au-dessus de la porte', 800, 400, 300, 2, 2000),
+      caisson('Colonne droite', 600, 2400, 600, 1),
+    ],
+  };
+}
+
+const SINGLE_PRESETS: readonly SinglePreset[] = [
   {
     id: 'dressing',
     title: 'Dressing',
@@ -73,4 +103,14 @@ export const PRESETS: readonly Preset[] = [
       columns: [newColumn({ doors: 2 })],
     }),
   },
+];
+
+export const PRESETS: readonly Preset[] = [
+  {
+    id: 'niche',
+    title: 'Trois caissons',
+    description: 'Deux colonnes de 2,40 m encadrant un meuble suspendu au-dessus d\'une porte, plaqué au mur.',
+    build: niche,
+  },
+  ...SINGLE_PRESETS.map((p) => ({ ...p, build: () => singleEnsemble(p.build()) })),
 ];

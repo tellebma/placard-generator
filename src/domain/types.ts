@@ -31,6 +31,8 @@ export interface Prices {
 }
 
 export interface ClosetConfig {
+  /** Identifiant stable du caisson dans un ensemble. */
+  readonly id: string;
   readonly name: string;
   readonly shape: Shape;
   /** Largeur extérieure totale. */
@@ -47,6 +49,8 @@ export interface ClosetConfig {
   readonly backThickness: number;
   /** Hauteur du socle (0 = sans socle). */
   readonly plinth: number;
+  /** Hauteur de pose : du sol au dessous du caisson (0 = posé au sol, sinon suspendu au mur, sans socle). */
+  readonly elevation: number;
   /** Jeu autour des portes. */
   readonly doorGap: number;
   readonly board: BoardSpec;
@@ -96,4 +100,12 @@ export interface Issue {
   readonly message: string;
   /** Index de la colonne concernée, le cas échéant. */
   readonly column?: number;
+  /** Index du caisson concerné (ensemble de plusieurs caissons). */
+  readonly caisson?: number;
+}
+
+/** Plusieurs caissons posés côte à côte, de gauche à droite, alignés contre le mur du fond. */
+export interface Ensemble {
+  readonly name: string;
+  readonly caissons: readonly ClosetConfig[];
 }

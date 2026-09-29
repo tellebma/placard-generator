@@ -1,21 +1,23 @@
-import { parseConfig } from './domain/defaults';
-import type { ClosetConfig, NumberedPiece } from './domain/types';
+import { parseEnsemble } from './domain/ensemble';
+import type { Ensemble, NumberedPiece } from './domain/types';
 
-const STORAGE_KEY = 'placard-builder:config';
+const STORAGE_KEY = 'placard-builder:ensemble';
+/** Ancienne sauvegarde à caisson unique, reprise au premier lancement. */
+const LEGACY_KEY = 'placard-builder:config';
 
-export function loadStoredConfig(): ClosetConfig | null {
+export function loadStoredEnsemble(): Ensemble | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? parseConfig(JSON.parse(raw)) : null;
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_KEY);
+    return raw ? parseEnsemble(JSON.parse(raw)) : null;
   } catch (err) {
     console.warn('Configuration sauvegardée illisible, valeurs par défaut utilisées.', err);
     return null;
   }
 }
 
-export function storeConfig(cfg: ClosetConfig): void {
+export function storeEnsemble(ensemble: Ensemble): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(ensemble));
   } catch (err) {
     console.warn('Impossible de sauvegarder la configuration.', err);
   }
@@ -33,8 +35,8 @@ function download(filename: string, content: string, type: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function exportJson(cfg: ClosetConfig): void {
-  download(`${slug(cfg.name)}.json`, JSON.stringify(cfg, null, 2), 'application/json');
+export function exportJson(ensemble: Ensemble): void {
+  download(`${slug(ensemble.name)}.json`, JSON.stringify(ensemble, null, 2), 'application/json');
 }
 
 const csvCell = (v: string | number): string => {
@@ -43,18 +45,18 @@ const csvCell = (v: string | number): string => {
 };
 
 /** CSV au format Excel français (séparateur « ; », BOM UTF-8). */
-export function exportCsv(cfg: ClosetConfig, pieces: readonly NumberedPiece[]): void {
+export function exportCsv(name: string, pieces: readonly NumberedPiece[]): void {
   const header = ['Réf', 'Pièce', 'Qté', 'Longueur', 'Largeur', 'Épaisseur', 'Matériau', 'Chants L', 'Chants l', 'Emplacement', 'Remarque'];
   const rows = pieces.map((p) => [
     p.ref, p.name, p.qty, p.length, p.width, p.thickness, p.material, p.edgeLong, p.edgeShort, p.where ?? '', p.note ?? '',
   ]);
   const csv = [header, ...rows].map((r) => r.map(csvCell).join(';')).join('\n');
-  download(`${slug(cfg.name)}-debit.csv`, `﻿${csv}`, 'text/csv;charset=utf-8');
+  download(`${slug(name)}-debit.csv`, `﻿${csv}`, 'text/csv;charset=utf-8');
 }
 
-export async function importJson(file: File): Promise<ClosetConfig> {
+export async function importJson(file: File): Promise<Ensemble> {
   const text = await file.text();
-  const cfg = parseConfig(JSON.parse(text));
-  if (!cfg) throw new Error("Ce fichier n'est pas une configuration de placard valide.");
-  return cfg;
+  const ensemble = parseEnsemble(JSON.parse(text));
+  if (!ensemble) throw new Error("Ce fichier n'est pas une configuration de placard valide.");
+  return ensemble;
 }

@@ -5,11 +5,13 @@ import { ClosetPanel } from './design/ClosetPanel';
 import { DesignView } from './design/DesignView';
 import { Inspector } from './design/Inspector';
 import { PresetsModal } from './design/PresetsModal';
+import { computeEnsemble } from './domain/ensembleProject';
 import { PRESETS } from './domain/presets';
 import { computeProject } from './domain/project';
-import type { ClosetConfig } from './domain/types';
-import { exportCsv, exportJson, importJson, loadStoredConfig, storeConfig } from './io';
+import type { ClosetConfig, Ensemble } from './domain/types';
+import { exportCsv, exportJson, importJson, loadStoredEnsemble, storeEnsemble } from './io';
 import { NONE, sanitizeSelection, type Selection } from './state/selection';
+import { useFocusedHistory } from './state/useFocusedHistory';
 import { useHistory, type SetOptions } from './state/useHistory';
 import { useShortcuts } from './state/useShortcuts';
 import { TopBar, type Mode } from './TopBar';
@@ -24,54 +26,69 @@ export default function App() {
 }
 
 function Workspace() {
-  const [stored] = useState(() => loadStoredConfig());
-  const history = useHistory<ClosetConfig>(() => stored ?? PRESETS[0].build());
+  const [stored] = useState(() => loadStoredEnsemble());
+  const history = useHistory<Ensemble>(() => stored ?? PRESETS[0].build());
   const [showPresets, setShowPresets] = useState(stored === null);
   const [mode, setMode] = useState<Mode>('design');
+  const [rawActive, setRawActive] = useState(0);
   const [rawSelection, setSelection] = useState<Selection>(NONE);
   const fileInput = useRef<HTMLInputElement>(null);
   const notify = useToast();
 
-  const cfg = history.value;
+  const ensemble = history.value;
+  const active = Math.min(rawActive, ensemble.caissons.length - 1);
+  const focused = useFocusedHistory(history, active);
+  const cfg = focused.value;
   const selection = sanitizeSelection(rawSelection, cfg);
   const project = useMemo(() => computeProject(cfg), [cfg]);
-  const hasErrors = project.issues.some((i) => i.level === 'error');
+  const ensembleProject = useMemo(() => computeEnsemble(ensemble), [ensemble]);
+  const hasErrors = ensembleProject.issues.some((i) => i.level === 'error');
 
-  useEffect(() => storeConfig(cfg), [cfg]);
+  useEffect(() => storeEnsemble(ensemble), [ensemble]);
   useEffect(() => {
-    document.title = `${cfg.name} · Configurateur de placard`;
-  }, [cfg.name]);
+    document.title = `${ensemble.name} · Configurateur de placard`;
+  }, [ensemble.name]);
 
-  const apply = useCallback((next: ClosetConfig, opts?: SetOptions) => history.set(next, opts), [history]);
-
-  const pickPreset = (next: ClosetConfig) => {
-    const firstRun = stored === null && !history.canUndo;
-    history.set(next);
+  const apply = useCallback((next: ClosetConfig, opts?: SetOptions) => focused.set(next, opts), [focused]);
+  const applyEnsemble = useCallback((next: Ensemble) => history.set(next), [history]);
+  const onActive = useCallback((index: number) => {
+    setRawActive(index);
     setSelection(NONE);
+  }, []);
+
+  const replaceAll = (next: Ensemble) => {
+    history.set(next);
+    setRawActive(0);
+    setSelection(NONE);
+  };
+
+  const pickPreset = (next: Ensemble) => {
+    const firstRun = stored === null && !history.canUndo;
+    replaceAll(next);
     setShowPresets(false);
     setMode('design');
     if (!firstRun) notify({ message: `Nouveau projet « ${next.name} »`, action: { label: 'Annuler', run: history.undo } });
   };
 
   const onSave = useCallback(() => {
-    exportJson(cfg);
+    exportJson(ensemble);
     notify({ message: 'Projet enregistré dans vos téléchargements.' });
-  }, [cfg, notify]);
+  }, [ensemble, notify]);
 
   const onOpen = useCallback(() => fileInput.current?.click(), []);
+  const onCsv = () => exportCsv(ensemble.name, ensembleProject.pieces);
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     try {
-      history.set(await importJson(file));
-      setSelection(NONE);
+      replaceAll(await importJson(file));
       notify({ message: `« ${file.name} » ouvert.`, action: { label: 'Annuler', run: history.undo } });
     } catch (err) {
       notify({ message: err instanceof Error ? err.message : 'Import impossible.', tone: 'error' });
     }
   };
 
-  useShortcuts({ history, selection, setSelection, project, onSave, onOpen, enabled: mode === 'design' && !showPresets });
+  useShortcuts({ history: focused, selection, setSelection, project, onSave, onOpen, enabled: mode === 'design' && !showPresets });
 
   return (
     <div className={`app app--${mode}`}>
@@ -83,17 +100,33 @@ function Workspace() {
         onNew={() => setShowPresets(true)}
         onOpen={onOpen}
         onSave={onSave}
-        onCsv={() => exportCsv(cfg, project.pieces)}
+        onCsv={onCsv}
         onPrint={() => window.print()}
       />
 
       {mode === 'design' ? (
         <div className="workspace">
           <aside className="panel panel--left" aria-label="Forme et dimensions">
-            <ClosetPanel cfg={cfg} onChange={(patch, key) => history.set((c) => ({ ...c, ...patch }), { coalesce: key })} />
+            <ClosetPanel
+              key={cfg.id}
+              cfg={cfg}
+              shared={ensemble.caissons.length > 1}
+              onChange={(patch, key) => focused.set((c) => ({ ...c, ...patch }), { coalesce: `${cfg.id}.${key}` })}
+            />
           </aside>
           <main className="stage-wrap">
-            <DesignView project={project} history={history} selection={selection} onSelect={setSelection} onBuild={() => setMode('build')} />
+            <DesignView
+              ensemble={ensemble}
+              ensembleProject={ensembleProject}
+              active={active}
+              onActive={onActive}
+              applyEnsemble={applyEnsemble}
+              project={project}
+              history={focused}
+              selection={selection}
+              onSelect={setSelection}
+              onBuild={() => setMode('build')}
+            />
           </main>
           <aside className="panel panel--right" aria-label="Aménagement">
             <Inspector cfg={cfg} project={project} selection={selection} onSelect={setSelection} apply={apply} />
@@ -101,15 +134,15 @@ function Workspace() {
         </div>
       ) : (
         <BuildView
-          cfg={cfg}
-          project={project}
+          name={ensemble.name}
+          project={ensembleProject}
           onPrint={() => window.print()}
-          onCsv={() => exportCsv(cfg, project.pieces)}
+          onCsv={onCsv}
           onFix={() => setMode('design')}
         />
       )}
 
-      <PrintDossier cfg={cfg} project={project} />
+      <PrintDossier name={ensemble.name} project={ensembleProject} />
 
       {showPresets && <PresetsModal onPick={pickPreset} onClose={() => setShowPresets(false)} />}
 

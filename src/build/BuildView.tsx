@@ -1,8 +1,9 @@
 import { AlertTriangle, Download, LayoutGrid, ListChecks, Printer, Ruler, ShoppingCart, Table2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
+import { caissonTag } from '../domain/ensemble';
+import type { EnsembleProject, PlacedCaisson } from '../domain/ensembleProject';
 import { maxHeight } from '../domain/geometry';
-import type { Project } from '../domain/project';
-import type { ClosetConfig } from '../domain/types';
+import { EnsembleFront, EnsembleTop } from '../drawing/EnsembleDrawing';
 import { PlanDrawing } from '../drawing/PlanDrawing';
 import { SideView } from '../drawing/SideView';
 import { useChecklist } from '../state/useChecklist';
@@ -13,8 +14,8 @@ import { PiecesTable, pieceKey } from './PiecesTable';
 type SectionId = 'plan' | 'pieces' | 'cutting' | 'shopping' | 'assembly';
 
 interface Props {
-  readonly cfg: ClosetConfig;
-  readonly project: Project;
+  readonly name: string;
+  readonly project: EnsembleProject;
   readonly onPrint: () => void;
   readonly onCsv: () => void;
   readonly onFix: () => void;
@@ -27,13 +28,62 @@ const Progress = ({ done, total }: { readonly done: number; readonly total: numb
   </span>
 );
 
-export function BuildView({ cfg, project, onPrint, onCsv, onFix }: Props) {
+function CaissonCard({ caisson: c, active }: { readonly caisson: PlacedCaisson; readonly active: boolean }) {
+  return (
+    <div id={`caisson-${c.index}`} className={`card plan-grid__unit${active ? ' is-active' : ''}`}>
+      <h3 className="plan-grid__unit-title">
+        {caissonTag(c.index)} — {c.label} ({c.cfg.width} × {maxHeight(c.cfg)} × {c.cfg.depth}){c.y > 0 ? ` · suspendu à ${c.y} mm du sol` : ''}
+      </h3>
+      <div className="plan-grid__unit-body">
+        <PlanDrawing cfg={c.cfg} project={c.project} showDoors={false} />
+        <SideView cfg={c.cfg} layout={c.project.layout} />
+      </div>
+    </div>
+  );
+}
+
+function PlanSection({ project }: { readonly project: EnsembleProject }) {
+  const [active, setActive] = useState<number | undefined>(undefined);
+  const pick = (index: number) => {
+    setActive(index);
+    document.getElementById(`caisson-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  const solo = project.caissons[0];
+
+  return (
+    <div className="plan-grid">
+      {project.caissons.length === 1 ? (
+        <>
+          <div className="card"><PlanDrawing cfg={solo.cfg} project={solo.project} showDoors={false} /></div>
+          <div className="card"><SideView cfg={solo.cfg} layout={solo.project.layout} /></div>
+        </>
+      ) : (
+        <>
+          <div className="card plan-grid__wide"><EnsembleFront project={project} activeIndex={active} onPick={pick} /></div>
+          <div className="card plan-grid__wide plan-grid__top"><EnsembleTop project={project} activeIndex={active} onPick={pick} /></div>
+          <div className="plan-grid__units">
+            {project.caissons.map((c) => (
+              <CaissonCard key={c.index} caisson={c} active={active === c.index} />
+            ))}
+          </div>
+        </>
+      )}
+      <p className="text-3 small plan-grid__note">
+        Cotes en mm. Largeurs de colonnes = intérieur. Hauteur des étagères = dessous de l'étagère, depuis le dessus du bas.
+      </p>
+    </div>
+  );
+}
+
+export function BuildView({ name, project, onPrint, onCsv, onFix }: Props) {
   const [section, setSection] = useState<SectionId>('plan');
   const cut = useChecklist('pieces');
   const shop = useChecklist('shopping');
   const build = useChecklist('assembly');
   const items = shoppingItems(project.packs, project.hardware);
   const errors = project.issues.filter((i) => i.level === 'error');
+  const caissonCount = project.caissons.length;
+  const thickness = project.caissons[0]?.cfg.thickness ?? 0;
 
   const nav: readonly { id: SectionId; label: string; icon: ReactNode; progress?: ReactNode }[] = [
     { id: 'plan', label: 'Plan coté', icon: <Ruler size={17} /> },
@@ -58,9 +108,9 @@ export function BuildView({ cfg, project, onPrint, onCsv, onFix }: Props) {
       <div className="build__main">
         <header className="build__head">
           <div>
-            <h1>{cfg.name}</h1>
+            <h1>{name}</h1>
             <p className="text-2 mono small">
-              {cfg.width} × {maxHeight(cfg)} × {cfg.depth} mm · {project.summary.pieceCount} pièces · {cfg.thickness} mm
+              {project.width} × {project.height} × {project.depth} mm · {caissonCount} caisson{caissonCount > 1 ? 's' : ''} · {project.summary.pieceCount} pièces · {thickness} mm
             </p>
           </div>
           <div className="build__actions">
@@ -77,15 +127,7 @@ export function BuildView({ cfg, project, onPrint, onCsv, onFix }: Props) {
           </div>
         )}
 
-        {section === 'plan' && (
-          <div className="plan-grid">
-            <div className="card"><PlanDrawing cfg={cfg} project={project} showDoors={false} /></div>
-            <div className="card"><SideView cfg={cfg} layout={project.layout} /></div>
-            <p className="text-3 small plan-grid__note">
-              Cotes en mm. Largeurs de colonnes = intérieur. Hauteur des étagères = dessous de l'étagère, depuis le dessus du bas.
-            </p>
-          </div>
-        )}
+        {section === 'plan' && <PlanSection project={project} />}
         {section === 'pieces' && <PiecesTable pieces={project.pieces} checklist={cut} />}
         {section === 'cutting' && <CuttingBoards packs={project.packs} pieces={project.pieces} />}
         {section === 'shopping' && <ShoppingList items={items} checklist={shop} />}

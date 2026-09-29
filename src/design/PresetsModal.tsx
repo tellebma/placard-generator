@@ -1,22 +1,21 @@
 import { useMemo } from 'react';
+import { computeEnsemble } from '../domain/ensembleProject';
 import { PRESETS, type Preset } from '../domain/presets';
-import { computeProject } from '../domain/project';
-import type { ClosetConfig } from '../domain/types';
-import { PlanDrawing } from '../drawing/PlanDrawing';
+import type { Ensemble } from '../domain/types';
+import { EnsembleFront } from '../drawing/EnsembleDrawing';
 import { Modal } from '../ui/overlays';
 
 interface Props {
-  readonly onPick: (cfg: ClosetConfig) => void;
+  readonly onPick: (ensemble: Ensemble) => void;
   readonly onClose?: () => void;
 }
 
-function PresetCard({ preset, onPick }: { readonly preset: Preset; readonly onPick: (cfg: ClosetConfig) => void }) {
-  const cfg = useMemo(() => preset.build(), [preset]);
-  const project = useMemo(() => computeProject(cfg), [cfg]);
+function PresetCard({ preset, onPick }: { readonly preset: Preset; readonly onPick: (ensemble: Ensemble) => void }) {
+  const project = useMemo(() => computeEnsemble(preset.build()), [preset]);
   return (
     <button type="button" className="preset" onClick={() => onPick(preset.build())}>
       <span className="preset__thumb">
-        <PlanDrawing cfg={cfg} project={project} showDoors={false} thumbnail />
+        <EnsembleFront project={project} thumbnail />
       </span>
       <strong>{preset.title}</strong>
       <span className="text-2 small">{preset.description}</span>

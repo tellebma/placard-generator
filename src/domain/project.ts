@@ -31,7 +31,7 @@ export interface Project {
   readonly summary: Summary;
 }
 
-function summarize(cfg: ClosetConfig, pieces: readonly NumberedPiece[], packs: readonly PackingResult[]): Summary {
+export function summarize(cfg: ClosetConfig, pieces: readonly NumberedPiece[], packs: readonly PackingResult[]): Summary {
   const boardsOf = (material: 'panneau' | 'fond') =>
     packs.filter((p) => p.material === material).reduce((s, p) => s + p.boards.length + p.oversize.length, 0);
   const boards = boardsOf('panneau');

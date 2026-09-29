@@ -23,8 +23,11 @@ export type Updater<T> = T | ((prev: T) => T);
 export interface History<T> {
   readonly value: T;
   readonly set: (updater: Updater<T>, opts?: SetOptions) => void;
-  /** Enregistre `start` comme étape précédente si la valeur a changé depuis (fin de glisser-déposer). */
-  readonly commitFrom: (start: T) => void;
+  /**
+   * Enregistre `start` comme étape précédente si la valeur a changé depuis (fin de glisser-déposer).
+   * Une fonction reçoit la valeur courante et renvoie l'état de départ à enregistrer.
+   */
+  readonly commitFrom: (start: Updater<T>) => void;
   readonly undo: () => void;
   readonly redo: () => void;
   readonly canUndo: boolean;
@@ -59,10 +62,11 @@ export function useHistory<T>(initial: () => T): History<T> {
     });
   }, []);
 
-  const commitFrom = useCallback((start: T) => {
-    setState((s) =>
-      Object.is(s.present, start) ? s : { ...s, past: pushPast(s.past, start), future: [], lastKey: null },
-    );
+  const commitFrom = useCallback((updater: Updater<T>) => {
+    setState((s) => {
+      const start = typeof updater === 'function' ? (updater as (present: T) => T)(s.present) : updater;
+      return Object.is(s.present, start) ? s : { ...s, past: pushPast(s.past, start), future: [], lastKey: null };
+    });
   }, []);
 
   const undo = useCallback(() => {

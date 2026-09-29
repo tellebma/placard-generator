@@ -146,7 +146,8 @@ function backPieces(cfg: ClosetConfig, layout: Layout): Piece[] {
   });
 }
 
-const pieceKey = (p: Piece): string =>
+/** Identité d'une pièce (hors quantité et emplacement) : deux pièces de même identité sont interchangeables. */
+export const pieceIdentity = (p: Piece): string =>
   [p.name, p.material, p.length, p.width, p.thickness, p.edgeLong, p.edgeShort, p.note ?? ''].join('|');
 
 const joinWhere = (a?: string, b?: string): string | undefined => {
@@ -157,7 +158,7 @@ const joinWhere = (a?: string, b?: string): string | undefined => {
 /** Regroupe les pièces identiques en additionnant les quantités. */
 export function mergePieces(pieces: readonly Piece[]): Piece[] {
   return pieces.reduce<Piece[]>((acc, p) => {
-    const idx = acc.findIndex((q) => pieceKey(q) === pieceKey(p));
+    const idx = acc.findIndex((q) => pieceIdentity(q) === pieceIdentity(p));
     if (idx === -1) return [...acc, p];
     return acc.map((q, i) => (i === idx ? { ...q, qty: q.qty + p.qty, where: joinWhere(q.where, p.where) } : q));
   }, []);

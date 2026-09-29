@@ -1,19 +1,28 @@
-import { AlertTriangle, ArrowRight, Box, CheckCircle2, PenLine } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Box, CheckCircle2, Columns3, PenLine } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
+import type { EnsembleProject } from '../domain/ensembleProject';
 import type { Project } from '../domain/project';
-import type { ClosetConfig, Issue } from '../domain/types';
+import type { ClosetConfig, Ensemble, Issue } from '../domain/types';
+import { EnsembleFront, EnsembleTop } from '../drawing/EnsembleDrawing';
 import { selectedColumnId, type Selection } from '../state/selection';
 import type { History } from '../state/useHistory';
 import { Kbd, Segmented } from '../ui/controls';
 import { Menu } from '../ui/overlays';
+import { CaissonBar } from './CaissonBar';
 import type { DoorMode } from './Canvas3D';
 import { EditorCanvas } from './EditorCanvas';
 
 const Canvas3D = lazy(() => import('./Canvas3D'));
 
-type ViewMode = '2d' | '3d';
+type ViewMode = '2d' | 'ensemble' | '3d';
 
 interface Props {
+  readonly ensemble: Ensemble;
+  readonly ensembleProject: EnsembleProject;
+  readonly active: number;
+  readonly onActive: (index: number) => void;
+  readonly applyEnsemble: (next: Ensemble) => void;
+  /** Caisson en cours d'édition. */
   readonly project: Project;
   readonly history: History<ClosetConfig>;
   readonly selection: Selection;
@@ -23,22 +32,32 @@ interface Props {
 
 const euros = (n: number) => n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 
-export function DesignView({ project, history, selection, onSelect, onBuild }: Props) {
+export function DesignView(props: Props) {
+  const { ensemble, ensembleProject, active, onActive, applyEnsemble, project, history, selection, onSelect, onBuild } = props;
   const [view, setView] = useState<ViewMode>('2d');
   const [doorMode, setDoorMode] = useState<DoorMode>('hidden');
-  const cfg = history.value;
   const selIndex = project.layout.columns.find((c) => c.id === selectedColumnId(selection))?.index ?? null;
-  const s = project.summary;
+  const s = ensembleProject.summary;
+  const pickIssue = (issue: Issue) => {
+    if (issue.caisson !== undefined && issue.caisson !== active) onActive(issue.caisson);
+    const cols = ensembleProject.caissons[issue.caisson ?? active]?.project.layout.columns;
+    if (issue.column !== undefined && cols?.[issue.column]) {
+      onSelect({ kind: 'column', col: cols[issue.column].id });
+      setView('2d');
+    }
+  };
 
   return (
     <div className="stage">
+      <CaissonBar ensemble={ensemble} active={active} issues={ensembleProject.issues} onActive={onActive} apply={applyEnsemble} />
       <div className="stage__toolbar">
         <Segmented<ViewMode>
           ariaLabel="Vue"
           size="sm"
           value={view}
           options={[
-            { value: '2d', label: <span className="seg-icon"><PenLine size={14} />Plan</span> },
+            { value: '2d', label: <span className="seg-icon"><PenLine size={14} />Caisson</span> },
+            { value: 'ensemble', label: <span className="seg-icon"><Columns3 size={14} />Ensemble</span> },
             { value: '3d', label: <span className="seg-icon"><Box size={14} />3D</span> },
           ]}
           onChange={setView}
@@ -46,7 +65,7 @@ export function DesignView({ project, history, selection, onSelect, onBuild }: P
         <Segmented<DoorMode>
           ariaLabel="Portes"
           size="sm"
-          value={view === '2d' && doorMode === 'open' ? 'closed' : doorMode}
+          value={view !== '3d' && doorMode === 'open' ? 'closed' : doorMode}
           options={[
             { value: 'hidden', label: 'Sans portes' },
             { value: 'closed', label: 'Fermées' },
@@ -55,15 +74,22 @@ export function DesignView({ project, history, selection, onSelect, onBuild }: P
           onChange={setDoorMode}
         />
         <span className="spacer" />
-        <IssuesButton issues={project.issues} onPick={(col) => onSelect({ kind: 'column', col: project.layout.columns[col].id })} />
+        <IssuesButton issues={ensembleProject.issues} onPick={pickIssue} />
       </div>
 
       <div className="stage__canvas">
-        {view === '2d' ? (
+        {view === '2d' && (
           <EditorCanvas project={project} history={history} selection={selection} onSelect={onSelect} showDoors={doorMode !== 'hidden'} />
-        ) : (
+        )}
+        {view === 'ensemble' && (
+          <div className="ensemble-views">
+            <EnsembleFront project={ensembleProject} showDoors={doorMode !== 'hidden'} activeIndex={active} onPick={onActive} />
+            <EnsembleTop project={ensembleProject} activeIndex={active} onPick={onActive} />
+          </div>
+        )}
+        {view === '3d' && (
           <Suspense fallback={<div className="stage__loading">Chargement de la 3D…</div>}>
-            <Canvas3D cfg={cfg} project={project} doorMode={doorMode} selectedColumn={selIndex} />
+            <Canvas3D ensemble={ensembleProject} activeCaisson={active} doorMode={doorMode} selectedColumn={selIndex} onPickCaisson={onActive} />
           </Suspense>
         )}
         {view === '2d' && (
@@ -74,7 +100,8 @@ export function DesignView({ project, history, selection, onSelect, onBuild }: P
             <span><Kbd>Suppr</Kbd> retirer · <Kbd>↑</Kbd><Kbd>↓</Kbd> ajuster</span>
           </p>
         )}
-        {view === '3d' && <p className="stage__hint"><span>Glisser : tourner</span><span>Molette : zoomer</span><span>Clic droit : déplacer</span></p>}
+        {view === 'ensemble' && <p className="stage__hint"><span>Clic sur un caisson : le modifier</span><span>Vue de face et vue de dessus, caissons alignés au mur</span></p>}
+        {view === '3d' && <p className="stage__hint"><span>Clic : choisir un caisson</span><span>Glisser : tourner</span><span>Molette : zoomer</span><span>Clic droit : déplacer</span></p>}
       </div>
 
       <footer className="summary">
@@ -92,7 +119,7 @@ export function DesignView({ project, history, selection, onSelect, onBuild }: P
   );
 }
 
-function IssuesButton({ issues, onPick }: { readonly issues: readonly Issue[]; readonly onPick: (col: number) => void }) {
+function IssuesButton({ issues, onPick }: { readonly issues: readonly Issue[]; readonly onPick: (issue: Issue) => void }) {
   const errors = issues.filter((i) => i.level === 'error').length;
   const tone = errors > 0 ? 'error' : issues.length > 0 ? 'warning' : 'ok';
   if (issues.length === 0) {
@@ -118,9 +145,9 @@ function IssuesButton({ issues, onPick }: { readonly issues: readonly Issue[]; r
               <button
                 type="button"
                 className={`callout callout--${i.level}`}
-                disabled={i.column === undefined}
+                disabled={i.column === undefined && i.caisson === undefined}
                 onClick={() => {
-                  if (i.column !== undefined) onPick(i.column);
+                  onPick(i);
                   close();
                 }}
               >

@@ -5,6 +5,7 @@ Configurateur de placard sur mesure pour le fabriquer soi-même : conception int
 ## Fonctionnalités
 
 - Placard droit ou sous-pente, colonnes, étagères, penderie, portes battantes
+- Ensemble de plusieurs caissons côte à côte (largeur, hauteur et profondeur propres à chacun), alignés contre le mur ; débit, découpe et notice globaux
 - Plan interactif : glisser les étagères, la tringle et les séparations, double-clic pour ajouter
 - Vue 3D (three.js) avec portes ouvrables
 - Liste de débit (dimensions finies, chants), calepinage par bandes, quincaillerie, budget estimé

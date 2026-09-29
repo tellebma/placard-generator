@@ -12,6 +12,7 @@ export const newColumn = (patch: Partial<ColumnConfig> = {}): ColumnConfig => ({
 });
 
 export const defaultConfig = (): ClosetConfig => ({
+  id: newId(),
   name: 'Mon placard',
   shape: 'droit',
   width: 2000,
@@ -21,6 +22,7 @@ export const defaultConfig = (): ClosetConfig => ({
   thickness: 18,
   backThickness: 3,
   plinth: 80,
+  elevation: 0,
   doorGap: 3,
   board: { length: 2800, width: 2070, kerf: 4 },
   backBoard: { length: 2440, width: 1220, kerf: 4 },
@@ -74,6 +76,7 @@ export function parseConfig(raw: unknown): ClosetConfig | null {
   const d = defaultConfig();
   const shape: Shape = o.shape === 'sous-pente' ? 'sous-pente' : 'droit';
   return {
+    id: typeof o.id === 'string' ? o.id : d.id,
     name: typeof o.name === 'string' ? o.name : d.name,
     shape,
     width: num(o.width, d.width),
@@ -83,6 +86,7 @@ export function parseConfig(raw: unknown): ClosetConfig | null {
     thickness: num(o.thickness, d.thickness),
     backThickness: num(o.backThickness, d.backThickness),
     plinth: num(o.plinth, d.plinth),
+    elevation: Math.max(0, num(o.elevation, d.elevation)),
     doorGap: num(o.doorGap, d.doorGap),
     board: parseBoard(o.board, d.board),
     backBoard: parseBoard(o.backBoard, d.backBoard),

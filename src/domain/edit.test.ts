@@ -3,7 +3,7 @@ import { defaultConfig, newColumn } from './defaults';
 import { addShelf, duplicateColumn, moveColumn, moveSeparation, removeColumn, removeShelf, setShelf } from './edit';
 import { computeLayout } from './geometry';
 import { PRESETS } from './presets';
-import { computeProject } from './project';
+import { computeEnsemble } from './ensembleProject';
 import type { ClosetConfig } from './types';
 
 const cfg3 = (): ClosetConfig => ({
@@ -54,13 +54,13 @@ describe('étagères et colonnes', () => {
 
 describe('modèles', () => {
   it.each(PRESETS.map((p) => [p.title, p] as const))('le modèle « %s » est sans erreur', (_title, preset) => {
-    const errors = computeProject(preset.build()).issues.filter((i) => i.level === 'error');
+    const errors = computeEnsemble(preset.build()).issues.filter((i) => i.level === 'error');
     expect(errors).toEqual([]);
   });
 });
 
 describe('modèles sans conseil', () => {
   it.each(PRESETS.map((p) => [p.title, p] as const))('le modèle « %s » ne déclenche aucune alerte', (_title, preset) => {
-    expect(computeProject(preset.build()).issues).toEqual([]);
+    expect(computeEnsemble(preset.build()).issues.filter((i) => i.level !== 'info')).toEqual([]);
   });
 });

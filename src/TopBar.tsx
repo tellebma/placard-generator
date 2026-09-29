@@ -1,6 +1,6 @@
 import { Download, FileJson, FilePlus2, FolderOpen, Hammer, Menu as MenuIcon, PencilRuler, Printer, Redo2, Undo2 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { ClosetConfig } from './domain/types';
+import type { Ensemble } from './domain/types';
 import type { History } from './state/useHistory';
 import { Segmented } from './ui/controls';
 import { Menu } from './ui/overlays';
@@ -8,7 +8,7 @@ import { Menu } from './ui/overlays';
 export type Mode = 'design' | 'build';
 
 interface Props {
-  readonly history: History<ClosetConfig>;
+  readonly history: History<Ensemble>;
   readonly mode: Mode;
   readonly onMode: (mode: Mode) => void;
   readonly hasErrors: boolean;
@@ -33,7 +33,7 @@ function MenuItem({ icon, label, shortcut, onClick }: { icon: ReactNode; label: 
 }
 
 export function TopBar({ history, mode, onMode, hasErrors, onNew, onOpen, onSave, onCsv, onPrint }: Props) {
-  const cfg = history.value;
+  const ensemble = history.value;
   return (
     <header className="topbar">
       <div className="topbar__brand">
@@ -45,9 +45,9 @@ export function TopBar({ history, mode, onMode, hasErrors, onNew, onOpen, onSave
         </svg>
         <input
           className="topbar__name"
-          value={cfg.name}
+          value={ensemble.name}
           aria-label="Nom du projet"
-          onChange={(e) => history.set({ ...cfg, name: e.target.value }, { coalesce: 'name' })}
+          onChange={(e) => history.set({ ...ensemble, name: e.target.value }, { coalesce: 'name' })}
         />
       </div>
 
@@ -90,7 +90,7 @@ export function TopBar({ history, mode, onMode, hasErrors, onNew, onOpen, onSave
             const run = (fn: () => void) => () => { close(); fn(); };
             return (
               <>
-                <MenuItem icon={<FilePlus2 size={16} />} label="Nouveau placard…" onClick={run(onNew)} />
+                <MenuItem icon={<FilePlus2 size={16} />} label="Nouveau projet…" onClick={run(onNew)} />
                 <MenuItem icon={<FolderOpen size={16} />} label="Ouvrir un fichier…" shortcut={`${mod}+O`} onClick={run(onOpen)} />
                 <MenuItem icon={<FileJson size={16} />} label="Enregistrer (.json)" shortcut={`${mod}+S`} onClick={run(onSave)} />
                 <div className="menu__sep" />

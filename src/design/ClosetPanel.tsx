@@ -5,8 +5,13 @@ import { NumberInput, Row, Segmented, Switch } from '../ui/controls';
 
 interface Props {
   readonly cfg: ClosetConfig;
+  /** Plusieurs caissons : socle et matériaux sont communs à tout l'ensemble. */
+  readonly shared: boolean;
   readonly onChange: (patch: Partial<ClosetConfig>, coalesce: string) => void;
 }
+
+const SharedNote = ({ shared }: { readonly shared: boolean }) =>
+  shared ? <p className="text-3 small shared-note">Commun à tous les caissons.</p> : null;
 
 export function Section({ title, children, collapsible, defaultOpen = true, aside }: {
   readonly title: string;
@@ -47,12 +52,20 @@ const SHAPES: readonly { value: Shape; title: string; text: string }[] = [
   { value: 'sous-pente', title: 'Sous-pente', text: 'Plafond incliné' },
 ];
 
-export function ClosetPanel({ cfg, onChange }: Props) {
+export function ClosetPanel({ cfg, shared, onChange }: Props) {
   const sloped = cfg.shape === 'sous-pente';
   const num = (key: keyof ClosetConfig, value: number) => onChange({ [key]: value } as Partial<ClosetConfig>, key);
 
   return (
     <div className="panel-scroll">
+      <Section title="Caisson">
+        <Row label="Nom">
+          {(id) => (
+            <input id={id} className="text-input" value={cfg.name} placeholder="Caisson" onChange={(e) => onChange({ name: e.target.value }, 'caisson-name')} />
+          )}
+        </Row>
+      </Section>
+
       <Section title="Forme">
         <div className="shape-cards" role="radiogroup" aria-label="Forme du placard">
           {SHAPES.map((s) => (
@@ -92,18 +105,37 @@ export function ClosetPanel({ cfg, onChange }: Props) {
         <Row label="Profondeur" hint="fond compris">{(id) => <NumberInput id={id} value={cfg.depth} min={200} onChange={(v) => num('depth', v)} />}</Row>
       </Section>
 
-      <Section
-        title="Socle"
-        aside={<Switch checked={cfg.plinth > 0} ariaLabel="Socle" onChange={(on) => onChange({ plinth: on ? 80 : 0 }, 'plinth-toggle')} />}
-      >
-        {cfg.plinth > 0 ? (
-          <Row label="Hauteur du socle">{(id) => <NumberInput id={id} value={cfg.plinth} min={0} onChange={(v) => num('plinth', v)} />}</Row>
+      <Section title="Pose">
+        <Segmented
+          ariaLabel="Pose du caisson"
+          size="sm"
+          value={cfg.elevation > 0 ? 'suspendu' : 'sol'}
+          options={[{ value: 'sol', label: 'Au sol' }, { value: 'suspendu', label: 'Suspendu' }]}
+          onChange={(v) => onChange({ elevation: v === 'suspendu' ? 2000 : 0 }, 'elevation-mode')}
+        />
+        {cfg.elevation > 0 ? (
+          <Row label="Hauteur de pose" hint="du sol au dessous">{(id) => <NumberInput id={id} value={cfg.elevation} min={1} onChange={(v) => num('elevation', Math.max(1, v))} />}</Row>
         ) : (
-          <p className="text-3 small">Sans socle, le caisson repose directement au sol.</p>
+          <p className="text-3 small">Posé au sol, sur le socle.</p>
         )}
       </Section>
 
+      {cfg.elevation === 0 && (
+        <Section
+          title="Socle"
+          aside={<Switch checked={cfg.plinth > 0} ariaLabel="Socle" onChange={(on) => onChange({ plinth: on ? 80 : 0 }, 'plinth-toggle')} />}
+        >
+          {shared && <p className="text-3 small shared-note">Commun aux caissons posés au sol.</p>}
+          {cfg.plinth > 0 ? (
+            <Row label="Hauteur du socle">{(id) => <NumberInput id={id} value={cfg.plinth} min={0} onChange={(v) => num('plinth', v)} />}</Row>
+          ) : (
+            <p className="text-3 small">Sans socle, le caisson repose directement au sol.</p>
+          )}
+        </Section>
+      )}
+
       <Section title="Matériaux" collapsible defaultOpen={false}>
+        <SharedNote shared={shared} />
         <div className="stack-sm">
           <span className="label">Épaisseur des panneaux</span>
           <Segmented
@@ -133,7 +165,7 @@ export function ClosetPanel({ cfg, onChange }: Props) {
       </Section>
 
       <Section title="Panneaux bruts & prix" collapsible defaultOpen={false}>
-        <p className="text-3 small">Formats vendus en magasin, pour le plan de découpe et le budget.</p>
+        <p className="text-3 small">Formats vendus en magasin, pour le plan de découpe et le budget.{shared ? ' Communs à tous les caissons.' : ''}</p>
         <Row label="Panneau (long.)">{(id) => <NumberInput id={id} value={cfg.board.length} onChange={(v) => onChange({ board: { ...cfg.board, length: v } }, 'board.length')} />}</Row>
         <Row label="Panneau (larg.)">{(id) => <NumberInput id={id} value={cfg.board.width} onChange={(v) => onChange({ board: { ...cfg.board, width: v } }, 'board.width')} />}</Row>
         <Row label="Prix panneau">{(id) => <NumberInput id={id} unit="€" value={cfg.prices.board} onChange={(v) => onChange({ prices: { ...cfg.prices, board: v } }, 'price.board')} />}</Row>

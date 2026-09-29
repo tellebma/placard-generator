@@ -18,7 +18,7 @@ function globalIssues(cfg: ClosetConfig): Issue[] {
   if (cfg.columns.length === 0) {
     issues.push({ level: 'error', message: 'Ajoute au moins une colonne.' });
   }
-  if (cfg.plinth === 0 && cfg.columns.some((c) => c.doors > 0)) {
+  if (cfg.plinth === 0 && cfg.elevation === 0 && cfg.columns.some((c) => c.doors > 0)) {
     issues.push({ level: 'warning', message: 'Sans socle, le bas des portes est au ras du sol : un socle de 60 à 100 mm est recommandé.' });
   }
   return issues;
@@ -78,7 +78,7 @@ function doorIssues(doors: readonly DoorGeom[]): Issue[] {
   }));
 }
 
-function packingIssues(packs: readonly PackingResult[]): Issue[] {
+export function packingIssues(packs: readonly PackingResult[]): Issue[] {
   return packs
     .filter((p) => p.oversize.length > 0)
     .map((p) => ({
@@ -87,11 +87,16 @@ function packingIssues(packs: readonly PackingResult[]): Issue[] {
     }));
 }
 
+/** Problèmes de conception d'un caisson, indépendants du calepinage. */
+export function designIssues(cfg: ClosetConfig, layout: Layout, doors: readonly DoorGeom[]): Issue[] {
+  return [...globalIssues(cfg), ...columnIssues(cfg, layout), ...doorIssues(doors)];
+}
+
 export function validate(
   cfg: ClosetConfig,
   layout: Layout,
   doors: readonly DoorGeom[],
   packs: readonly PackingResult[],
 ): Issue[] {
-  return [...globalIssues(cfg), ...columnIssues(cfg, layout), ...doorIssues(doors), ...packingIssues(packs)];
+  return [...designIssues(cfg, layout, doors), ...packingIssues(packs)];
 }

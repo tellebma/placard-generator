@@ -96,6 +96,20 @@
 .door__hinge { fill: var(--accent); }
 .door__handle { stroke: var(--text); stroke-width: 4; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 
+/* Ensemble de caissons (vues de face et de dessus) ---------------------- */
+.plan__part--top { fill: var(--wood); stroke: var(--wood-edge); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.ensemble__facade { stroke-dasharray: 6 4; }
+.ensemble__hit { pointer-events: all; }
+.ensemble__unit.is-clickable { cursor: pointer; }
+.ensemble__unit.is-clickable:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ensemble__unit.is-clickable:hover .plan__part { filter: brightness(1.03); }
+.ensemble__unit.is-active .plan__part { stroke: var(--accent); stroke-width: 2; }
+.ensemble__unit--recessed .plan__part { opacity: 0.8; }
+.ensemble__recess-overlay { opacity: 0.5; }
+.ensemble__hatch-line { stroke: var(--wood-edge); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.ensemble__recess-label, .ensemble__tag { fill: var(--text-2); }
+.ensemble__tag { font-weight: 700; }
+
 /* Canevas interactif --------------------------------------------------- */
 .editor { user-select: none; touch-action: none; padding: 8px 8px 56px; }
 .editor .zone { fill: transparent; cursor: pointer; transition: fill 0.15s; }
@@ -219,3 +233,77 @@
   background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
   background-size: 14px 14px;
 }
+
+/* Onglets des caissons d'un ensemble */
+.caissons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.caissons__tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.caissons__actions { display: flex; gap: 2px; flex-shrink: 0; }
+.caisson-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 5px 10px 5px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-2);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.caisson-tab:hover { border-color: var(--border-strong); color: var(--text); }
+.caisson-tab:focus-visible { outline: none; box-shadow: var(--ring); }
+.caisson-tab.is-active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); }
+.caisson-tab__tag {
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: var(--surface-3);
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+.caisson-tab.is-active .caisson-tab__tag { background: var(--accent); color: var(--on-accent); }
+.caisson-tab__text { display: flex; flex-direction: column; line-height: 1.2; }
+.caisson-tab__text strong { font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+.caisson-tab__text span { font-size: 0.68rem; color: var(--text-3); white-space: nowrap; }
+.shared-note { margin: 0; }
+.ensemble-views {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 8px;
+  padding: 16px 16px 72px;
+}
+.ensemble-views > svg { width: 100%; height: 100%; }
+.text-input {
+  height: 32px;
+  width: 160px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.text-input:hover { border-color: var(--text-3); }
+.text-input:focus { border-color: var(--accent); box-shadow: var(--ring); }
